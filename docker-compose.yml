@@ -1,0 +1,35 @@
+version: "3"
+services:
+  openresty1:
+    image: openresty/openresty:1.25.3.1-1-jammy
+    container_name: 'openresty1'
+    restart: 'always'
+    ports:
+      - '80:80'
+      - '443:443'
+    volumes:
+      - './openresty1/log:/var/log/openresty'
+      - './openresty1/conf.d:/etc/nginx/conf.d'
+      - './openresty1/nginx.conf:/usr/local/openresty/nginx/conf/nginx.conf'
+      - './openresty1/data:/data'
+      - './openresty1/cert:/usr/local/openresty/nginx/cert'
+    networks:
+      - lab
+
+  openresty2:
+    image: openresty/openresty:1.25.3.1-1-jammy
+    container_name: 'openresty2'
+    restart: 'always'
+    ports:
+      - '8080:8080'
+    volumes:
+      - './openresty2/log:/var/log/openresty'
+      - './openresty2/conf.d:/etc/nginx/conf.d'
+      - './openresty2/nginx.conf:/usr/local/openresty/nginx/conf/nginx.conf'
+      - './openresty2/data:/data'
+      - './openresty2/cert:/usr/local/openresty/nginx/cert'
+    networks:
+      - lab
+
+networks:
+  lab:
