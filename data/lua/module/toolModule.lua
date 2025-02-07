@@ -4,8 +4,12 @@ local cjson = require "cjson"
 local path = "/var/log/openresty/lua.log"
 
 local function swrite(content)
-    local file = io.open(path,'a+');
-    file:write(content.."\n")
+    local localTime = ngx.localtime()
+    local phase = ngx.get_phase()
+    local rspMsg = concat({localTime, phase, content}, ",")
+    
+    local file = io.open(path,'a+')
+    file:write(rspMsg.."\n")
     file:close()
 end
 

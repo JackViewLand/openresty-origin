@@ -7,11 +7,13 @@ services:
     ports:
       - '80:80'
       - '443:443'
+    environment:
+      SERVER: "openresty1"
     volumes:
       - './openresty1/log:/var/log/openresty'
       - './openresty1/conf.d:/etc/nginx/conf.d'
-      - './openresty1/nginx.conf:/usr/local/openresty/nginx/conf/nginx.conf'
-      - './openresty1/data:/data'
+      - './nginx.conf:/usr/local/openresty/nginx/conf/nginx.conf'
+      - './data:/data'
       - './openresty1/cert:/usr/local/openresty/nginx/cert'
     networks:
       - lab
@@ -22,11 +24,13 @@ services:
     restart: 'always'
     ports:
       - '8080:8080'
+    environment:
+      SERVER: "openresty2"
     volumes:
       - './openresty2/log:/var/log/openresty'
       - './openresty2/conf.d:/etc/nginx/conf.d'
-      - './openresty2/nginx.conf:/usr/local/openresty/nginx/conf/nginx.conf'
-      - './openresty2/data:/data'
+      - './nginx.conf:/usr/local/openresty/nginx/conf/nginx.conf'
+      - './data:/data'
       - './openresty2/cert:/usr/local/openresty/nginx/cert'
     networks:
       - lab

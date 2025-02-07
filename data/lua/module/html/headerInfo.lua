@@ -1,7 +1,6 @@
 local tool = require 'module/toolModule'
 local _M ={}
 local server_name = ngx.var.server_name
-local container = 'openresty1'
 
 local function getGeneral()
     local general = {}
@@ -63,6 +62,8 @@ local function getResponseHeaders()
 end
 
 local function show()
+    local prepareInfo = ngx.shared.prepareInfo
+    local container = prepareInfo:get("SERVER")
     ngx.header.content_type = 'text/plain'
     ngx.say("Information ViewController")
     ngx.say("==== "..server_name.." =====")
