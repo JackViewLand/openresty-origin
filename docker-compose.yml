@@ -1,7 +1,11 @@
 version: "3"
 services:
   openresty1:
-    image: openresty/openresty:1.25.3.1-1-jammy
+    # image: openresty/openresty:1.25.3.1-1-jammy
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: openresty:1.25.3.1-1
     container_name: 'openresty1'
     restart: 'always'
     ports:
@@ -19,7 +23,7 @@ services:
       - lab
 
   openresty2:
-    image: openresty/openresty:1.25.3.1-1-jammy
+    image: openresty:1.25.3.1-1
     container_name: 'openresty2'
     restart: 'always'
     ports:
@@ -34,6 +38,8 @@ services:
       - './openresty2/cert:/usr/local/openresty/nginx/cert'
     networks:
       - lab
+    depends_on:
+      - openresty1
 
 networks:
   lab:
