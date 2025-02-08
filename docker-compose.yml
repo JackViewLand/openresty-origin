@@ -2,8 +2,8 @@ services:
   openresty1:
     # image: openresty/openresty:1.25.3.1-1-jammy
     build:
-      context: .
-      dockerfile: Dockerfile
+      context: ./build
+      dockerfile: ./Dockerfile
     image: openresty:1.25.3.1-1
     container_name: 'openresty1'
     restart: 'always'
