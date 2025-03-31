@@ -1,4 +1,5 @@
 local tool = require 'module/toolModule'
+local cjson = require "cjson"
 local _M ={}
 local server_name = ngx.var.server_name
 
@@ -82,16 +83,25 @@ local function show()
     ngx.say(" ")
     ngx.say("-----Request Headers------")
     for k,v in pairs(requestHeaders) do
+        if type(v) == "table" then
+             v = cjson.encode(v)
+        end
         ngx.say(k..": "..v)
     end
     ngx.say(" ")
     ngx.say("-------Request args-------")
     for k,v in pairs(requestArgs) do
+        if type(v) == "table" then
+             v = cjson.encode(v)
+        end
         ngx.say(k..": "..v)
     end
     ngx.say(" ")
     ngx.say("-----Response Headers-----")
     for k,v in pairs(responseHeaders) do
+        if type(v) == "table" then
+             v = cjson.encode(v)
+        end
         ngx.say(k..": "..v)
     end
     ngx.say(" ")
