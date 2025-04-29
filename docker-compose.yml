@@ -13,13 +13,18 @@ services:
     environment:
       SERVER: "openresty1"
     volumes:
-      - './openresty1/log:/var/log/openresty'
+      - './openresty1/log:/var/log/nginx'
       - './openresty1/conf.d:/etc/nginx/conf.d'
       - './nginx.conf:/usr/local/openresty/nginx/conf/nginx.conf'
       - './data:/data'
       - './openresty1/cert:/usr/local/openresty/nginx/cert'
     networks:
       - lab
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "100m"
+        max-file: "1"
 
   openresty2:
     image: openresty:1.25.3.1-1
@@ -30,7 +35,7 @@ services:
     environment:
       SERVER: "openresty2"
     volumes:
-      - './openresty2/log:/var/log/openresty'
+      - './openresty2/log:/var/log/nginx'
       - './openresty2/conf.d:/etc/nginx/conf.d'
       - './nginx.conf:/usr/local/openresty/nginx/conf/nginx.conf'
       - './data:/data'
@@ -39,6 +44,11 @@ services:
       - lab
     depends_on:
       - openresty1
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "100m"
+        max-file: "1"
 
 networks:
   lab:

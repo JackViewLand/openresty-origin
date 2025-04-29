@@ -1,7 +1,7 @@
 local ntable = require "table.new"
 local concat = table.concat
 local cjson = require "cjson"
-local path = "/var/log/openresty/lua.log"
+local path = "/var/log/nginx/lua.log"
 
 local function swrite(content)
     local localTime = ngx.localtime()
