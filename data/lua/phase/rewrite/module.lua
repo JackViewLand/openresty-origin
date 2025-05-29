@@ -24,6 +24,7 @@ local function setCtx(ctx)
     ctx["port"] = ngx.var.server_port
     ctx["request_uri"] = ngx.var.request_uri
     ctx["uri"] = ngx.var.uri
+    ctx["args"] = ngx.req.get_uri_args()
     ctx["host"] = ngx.var.host
     ctx["localtime"] = ngx.var.time_local
     ctx["request_body"] = getRequestBody() or "-"
