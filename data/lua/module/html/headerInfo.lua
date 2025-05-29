@@ -90,11 +90,15 @@ local function show()
     end
     ngx.say(" ")
     ngx.say("-------Request args-------")
-    for k,v in pairs(requestArgs) do
-        if type(v) == "table" then
-             v = cjson.encode(v)
+    if type(requestArgs) == "string" then
+        ngx.say("args: "..requestArgs)
+    elseif type(requestArgs) == "table" then
+        for k,v in pairs(requestArgs) do
+            if type(v) == "table" then
+                v = cjson.encode(v)
+            end
+            ngx.say(k..": "..v)
         end
-        ngx.say(k..": "..v)
     end
     ngx.say(" ")
     ngx.say("-----Response Headers-----")
