@@ -37,7 +37,7 @@ end
 
 local function waf_bucket()
     if bucket.search() then
-        tool.log_record("hit bucket ip")
+        tool.swrite("hit bucket ip")
         ngx.exit(444)
     end
 end
