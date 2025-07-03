@@ -1,0 +1,6 @@
+[build]
+  cmd = "go build -o tmp/main main.go"
+  bin = "tmp/main"
+  includeExt = ["go"]
+  excludeDir = ["vendor"]
+  delay = 1000
