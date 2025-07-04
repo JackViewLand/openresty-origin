@@ -23,6 +23,17 @@ func cookieLoginHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("✅ 登入成功"))
 }
 
+func cookieLogoutHandler(w http.ResponseWriter, r *http.Request) {
+	http.SetCookie(w, &http.Cookie{
+		Name:     "auth_token",
+		Value:    "",
+		Path:     "/",
+		MaxAge:   -1, // 移除 cookie
+		HttpOnly: true,
+	})
+	w.Write([]byte("👋 已登出"))
+}
+
 func cookieCheckHandler(w http.ResponseWriter, r *http.Request) {
 	cookie, err := r.Cookie("auth_token")
 	if err != nil || cookie.Value != "jack_test" {
@@ -37,6 +48,7 @@ func main() {
 	// 配置路由
 	http.HandleFunc("/", rootHandler)
 	http.HandleFunc("/cookie/login", cookieLoginHandler)
+	http.HandleFunc("/cookie/logout", cookieLogoutHandler)
 	http.HandleFunc("/cookie/check", cookieCheckHandler)
 
 	http.ListenAndServe(":5000", nil)
