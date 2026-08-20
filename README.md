@@ -72,8 +72,21 @@ content-length 的 HTTP/2 請求（例如一般 GET），啟用後所有請求�
 續期（certbot 只會續期 30 天內到期的憑證，可安全重複執行）
 ```
 ./renew_cert.sh
-DRY_RUN=1 ./renew_cert.sh    # 只測試流程
+DRY_RUN=1 ./renew_cert.sh       # 只測試 certbot 流程，不續期也不部署
+FORCE_DEPLOY=1 ./renew_cert.sh  # 憑證沒變動也強制重新複製並 reload
 ```
+
+續期後會自動把憑證部署到站台設定讀取的位置：
+
+| 來源（certbot 簽發） | 目的（站台讀取） | 權限 |
+|---|---|---|
+| `/etc/letsencrypt/live/<域名>/fullchain.pem` | `conf.d/certs/<域名>.pem` | 644 |
+| `/etc/letsencrypt/live/<域名>/privkey.pem` | `conf.d/certs/<域名>.key` | 600 |
+
+複製動作在 openresty1 容器內執行 —— 容器內是 root，可讀取 host 上屬於
+root 0700 的 `live/` 與 `archive/` 目錄。只有憑證內容實際變動時才會複製並
+reload，因此每天跑 cron 不會產生無謂的 reload；reload 前一定先跑
+`openresty -t`，驗證失敗就中止，不影響正在運行的服務。
 建議加入 crontab 每天跑一次
 ```
 0 3 * * * /path/to/openresty-origin/renew_cert.sh >> /var/log/certbot-renew.log 2>&1
