@@ -56,11 +56,18 @@ STAGING=1 ./create_cert.sh example.com
 CERTBOT_EMAIL=me@example.com ./create_cert.sh example.com
 ```
 
-申請成功後，把憑證填入 `openresty1/conf.d/default.conf` 的 443 server：
+申請成功後腳本會自動產生 `openresty1/conf.d/ssl-<域名>.conf`（443 server，
+location 與 80 相同），驗證設定無誤後 reload，HTTPS 隨即生效。
+80 port 的原有行為維持不變，不會強制轉址到 HTTPS。
+
+該檔已存在時預設不覆蓋，避免蓋掉手動調整過的內容；要重新產生：
 ```
-ssl_certificate     /etc/letsencrypt/live/example.com/fullchain.pem;
-ssl_certificate_key /etc/letsencrypt/live/example.com/privkey.pem;
+FORCE_SSL_CONF=1 ./create_cert.sh example.com
 ```
+
+註：產生的設定刻意不啟用 http2。全域 `rewrite_by_lua` 會呼叫
+`ngx.req.read_body()`，而 OpenResty 1.25 的 `read_body()` 不支援沒有
+content-length 的 HTTP/2 請求（例如一般 GET），啟用後所有請求都會變成 500。
 
 續期（certbot 只會續期 30 天內到期的憑證，可安全重複執行）
 ```
@@ -73,3 +80,4 @@ DRY_RUN=1 ./renew_cert.sh    # 只測試流程
 ```
 
 憑證檔存放於主機 `./certbot/conf/`（已排除於版控之外）。
+續期後憑證路徑不變，`ssl-<域名>.conf` 不需要跟著更新。

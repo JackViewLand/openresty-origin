@@ -101,18 +101,121 @@ $COMPOSE run --rm certbot certonly \
     --non-interactive \
     "${STAGING_ARG[@]}"
 
-# ---------- 6. 重新載入 nginx ----------
+# ---------- 6. 產生 443 設定檔 ----------
+# 80 port 的設定維持原樣不動，443 以獨立檔案並存。
+SSL_CONF="openresty1/conf.d/ssl-$CERT_NAME.conf"
+
+if [ -f "$SSL_CONF" ] && [ "${FORCE_SSL_CONF:-0}" != "1" ]; then
+    echo "ℹ️  $SSL_CONF 已存在，保留不覆蓋（要重新產生請用 FORCE_SSL_CONF=1）"
+else
+    cat > "$SSL_CONF" <<CONF
+# 由 create_cert.sh 自動產生（憑證：${CERT_NAME}）
+# 憑證續期後路徑不變，此檔不需要跟著更新。
+server {
+    listen       443 ssl;
+    # 不啟用 http2：全域 rewrite_by_lua 會呼叫 ngx.req.read_body()，
+    # 而 OpenResty 1.25 的 read_body() 不支援沒有 content-length 的
+    # HTTP/2 請求（例如一般 GET），開了會讓所有請求變成 500。
+    server_name  ${DOMAINS[*]};
+
+    ssl_certificate     /etc/letsencrypt/live/$CERT_NAME/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/$CERT_NAME/privkey.pem;
+    ssl_protocols       TLSv1.2 TLSv1.3;
+    ssl_session_cache   shared:SSL:10m;
+    ssl_session_timeout 1d;
+
+    location / {
+        content_by_lua_file /data/lua/phase/content/controllerModule.lua;
+    }
+
+    location /proxy {
+        proxy_pass http://backend;
+        proxy_http_version 1.1;
+        proxy_set_header stream-true-ip \$remote_addr;
+        proxy_set_header Host \$host;
+        add_header Cache-Control "no-cache, no-store, must-revalidate";
+        add_header Pragma "no-cache";
+        add_header Expires "0";
+    }
+
+    location /image {
+        root   /data/static;
+        index  Leonardo.gif;
+    }
+
+    location /video {
+        root   /data/static;
+        index  view.mp4;
+        add_header Content-Type video/mp4;
+    }
+
+    location /mp3 {
+        root /data/static;
+        index playlist.mp3;
+        add_header Content-Type 'audio/mpeg';
+    }
+
+    location /doc {
+        root /data/static;
+        index test.doc;
+        add_header Content-Disposition 'attachment; filename="test.doc"';
+    }
+
+    location /socket.io {
+        content_by_lua_block{
+           local websocket = require "module/websocketModule"
+           websocket.main()
+        }
+    }
+
+    location /api/ {
+        proxy_pass http://goapi:5000/;
+    }
+
+    location ~ ^/httpcode/(\\d+)\$ {
+        content_by_lua_block{
+            ngx.header.content_type = 'text/plain'
+            local uri = ngx.var.uri
+            local code = tonumber(uri:match("/httpcode/(%d+)\$"))
+            if code then
+                ngx.status = code
+                ngx.say("http code: ",code)
+                ngx.exit(code)
+            else
+                ngx.status = 200
+                ngx.say("ok")
+                ngx.exit(200)
+            end
+        }
+    }
+
+    error_page  404              /404.html;
+
+    error_page   500 502 503 504  /50x.html;
+    location = /50x.html {
+        root   /usr/local/openresty/nginx/html;
+    }
+}
+CONF
+    echo "📝 已產生 $SSL_CONF"
+fi
+
+# ---------- 7. 驗證設定並重新載入 ----------
 echo
+echo "驗證 nginx 設定..."
+if ! $COMPOSE exec -T "$WEBROOT_SERVICE" openresty -t; then
+    echo "❌ nginx 設定驗證失敗，未重新載入（現有服務不受影響）" >&2
+    echo "   請檢查 $SSL_CONF 後手動執行：$COMPOSE exec $WEBROOT_SERVICE openresty -s reload" >&2
+    exit 1
+fi
+
 echo "重新載入 $WEBROOT_SERVICE ..."
-$COMPOSE exec -T "$WEBROOT_SERVICE" openresty -s reload || \
-    echo "⚠️  reload 失敗，請確認 nginx 設定後手動執行：$COMPOSE exec $WEBROOT_SERVICE openresty -s reload"
+$COMPOSE exec -T "$WEBROOT_SERVICE" openresty -s reload
 
 echo
 echo "✅ 憑證申請完成：${DOMAINS[*]}"
+echo "   HTTPS 已啟用，80 port 的原有行為維持不變。"
 echo
-echo "容器內路徑（填入 nginx 設定用）："
-echo "  ssl_certificate     /etc/letsencrypt/live/$CERT_NAME/fullchain.pem;"
-echo "  ssl_certificate_key /etc/letsencrypt/live/$CERT_NAME/privkey.pem;"
-echo
-echo "主機端路徑：./certbot/conf/live/$CERT_NAME/"
-echo "續期請執行：./renew_cert.sh"
+echo "   憑證存放：./certbot/conf/live/$CERT_NAME/"
+echo "   443 設定：$SSL_CONF"
+echo "   續期請執行：./renew_cert.sh（憑證路徑不變，設定檔不必跟著改）"
