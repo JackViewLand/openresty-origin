@@ -1,3 +1,9 @@
 *.key
 *.pem
 *.log
+
+# Let's Encrypt：憑證、私鑰與 ACME 驗證暫存檔不進版控
+certbot/conf/*
+!certbot/conf/.gitkeep
+certbot/www/*
+!certbot/www/.gitkeep

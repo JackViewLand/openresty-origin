@@ -19,6 +19,8 @@ services:
       - './nginx.conf:/usr/local/openresty/nginx/conf/nginx.conf'
       - './data:/data'
       - './openresty1/cert:/usr/local/openresty/nginx/cert'
+      - './certbot/www:/var/www/certbot'
+      - './certbot/conf:/etc/letsencrypt'
     networks:
       - lab
     logging:
@@ -41,6 +43,7 @@ services:
       - './nginx.conf:/usr/local/openresty/nginx/conf/nginx.conf'
       - './data:/data'
       - './openresty2/cert:/usr/local/openresty/nginx/cert'
+      - './certbot/conf:/etc/letsencrypt'
     networks:
       - lab
     depends_on:
@@ -50,6 +53,16 @@ services:
       options:
         max-size: "100m"
         max-file: "1"
+
+  # 由 ./create_cert.sh 與 ./renew_cert.sh 以 `docker compose run --rm` 呼叫，
+  # 不需常駐；profiles 讓 `docker compose up` 不會誤啟動它。
+  certbot:
+    image: certbot/certbot
+    profiles:
+      - certbot
+    volumes:
+      - './certbot/www:/var/www/certbot'
+      - './certbot/conf:/etc/letsencrypt'
 
   goapi:
     build:
