@@ -115,7 +115,9 @@ server {
     listen       443 ssl;
     # 不啟用 http2：全域 rewrite_by_lua 會呼叫 ngx.req.read_body()，
     # 而 OpenResty 1.25 的 read_body() 不支援沒有 content-length 的
-    # HTTP/2 請求（例如一般 GET），開了會讓所有請求變成 500。
+    # HTTP/2 請求（例如一般 GET），開了會讓所有請求變成 500（升 1.27 後未重新驗證）。
+    # 另外：OpenResty 1.27.1.2 的 nginx 核心仍受 NGINX2Root HTTP/2 RCE
+    # （CVE-2026-123007 / 123633）影響，在 OpenResty 出修補版前不可開啟。
     server_name  ${DOMAINS[*]};
 
     ssl_certificate     /etc/letsencrypt/live/$CERT_NAME/fullchain.pem;

@@ -1,4 +1,4 @@
-FROM openresty/openresty:1.25.3.1-1-jammy
+FROM openresty/openresty:1.27.1.2-13-jammy
 
 RUN \
     apt-get update && apt-get install -y vim logrotate jq && \
