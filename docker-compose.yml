@@ -13,6 +13,12 @@ services:
       - '5066:5066'
     environment:
       SERVER: "openresty1"
+    # openresty1 啟動時要解析 upstream 的 openresty2（upstream.conf）與 goapi（default.conf 的 proxy_pass），
+    # 解析不到會直接 emerg 退出。所以是 openresty1 依賴這兩個，不是反過來。
+    # 只需要容器存在（DNS 有名字），不必等 goapi 的 air 編譯完。
+    depends_on:
+      - openresty2
+      - goapi
     volumes:
       - './openresty1/log:/var/log/nginx'
       - './openresty1/conf.d:/etc/nginx/conf.d'
@@ -46,8 +52,6 @@ services:
       - './certbot/conf:/etc/letsencrypt'
     networks:
       - lab
-    depends_on:
-      - openresty1
     logging:
       driver: "json-file"
       options:
